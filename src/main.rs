@@ -3,6 +3,9 @@ mod board;
 mod bots;
 
 use board::Board;
+
+use bots::DFSBot;
+#[allow(unused)]
 use bots::{Bot, RandomBot, Human};
 
 struct Game<Xbot, Obot>
@@ -24,19 +27,53 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
         }
     }
 
-    fn sim_game(&mut self) {
-        while !self.board.is_complete() {
+    fn sim_game(&mut self) -> Option<u8> {
+        self.board = Board::new();
+
+        loop {
             self.board.place(self.xbot.choose_next(&self.board), 1);
             if self.board.is_complete() { break; }
+
             self.board.place(self.obot.choose_next(&self.board), 2);
+            if self.board.is_complete() { break; }
         }
 
-        self.board.print("");
+
+        self.board.is_win()
+    }
+
+    fn sim_games(&mut self, games: u32) {
+        let mut x_wins = 0u32;
+        let mut o_wins = 0u32;
+        let mut draws = 0u32;
+
+        let step = (games as f64 * 0.1) as u32;
+
+        for i in 0..games {
+            match self.sim_game() {
+                Some(1) => x_wins += 1,
+                Some(2) => o_wins += 1,
+                Some(_) => panic!(),
+                None => draws += 1,
+            }
+
+            if i % step == 0 && i != 0 {
+                println!("Reached {}%", i * 100 / games);
+            }
+        }
+
+        println!("X wins: {}", x_wins);
+        println!("O wins: {}", o_wins);
+        println!("Draws: {}", draws);
+
+        println!("X%: {}", (100 * x_wins) as f64 / games as f64);
+        println!("O%: {}", (100 * o_wins) as f64 / games as f64);
+        println!("Draw%: {}", (100 * draws) as f64 / games as f64);
     }
 }
 
 fn main () {
-    let mut game = Game::<Human, Human>::new();
+    let mut game = Game::<DFSBot, RandomBot>::new();
 
-    game.sim_game();
+    game.sim_games(100_000);
 }

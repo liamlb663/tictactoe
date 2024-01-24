@@ -1,11 +1,9 @@
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub struct Board {
     board: [u8; 9],
 }
 
-#[allow(dead_code)]
 impl Board {
     pub fn new() -> Self {
         Self {

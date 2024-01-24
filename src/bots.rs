@@ -24,7 +24,6 @@ impl Bot for RandomBot {
 pub struct Human {
     mark: char,
 }
-
 impl Bot for Human{ //Hehe
     fn new(player: u8) -> Self {
         Self {
@@ -61,5 +60,38 @@ impl Bot for Human{ //Hehe
 
             return input;
         }
+    }
+}
+
+pub struct DFSBot {
+    player: u8
+}
+impl DFSBot {
+    fn generate_moves(&self, board: &Board) -> Vec<(usize, Board)> {
+        let spaces = board.list_open();
+
+        spaces.iter().map(|&x| {
+            let mut board = board.clone();
+            board.place(x, self.player);
+            (x, board)
+        }).collect()
+    }
+}
+impl Bot for DFSBot {
+    fn new(player: u8) -> Self {
+        Self { player }
+    }
+
+    fn choose_next(&self, board: &Board) -> usize {
+        let moves = self.generate_moves(&board);
+
+        for (space, board) in moves {
+            if board.is_complete() {
+                return space;
+            }
+        }
+
+        let open = board.list_open();
+        *open.choose(&mut rand::thread_rng()).unwrap()
     }
 }
