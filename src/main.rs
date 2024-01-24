@@ -18,6 +18,7 @@ where
     board: Board,
 }
 
+#[allow(dead_code)]
 impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
     fn new() -> Self {
         Self {
@@ -27,17 +28,33 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
         }
     }
 
-    fn sim_game(&mut self) -> Option<u8> {
+    fn sim_game(&mut self, print: bool) -> Option<u8> {
         self.board = Board::new();
 
         loop {
-            self.board.place(self.xbot.choose_next(&self.board), 1);
+            let x_choice = self.xbot.choose_next(&self.board);
+            println!("X Choice: {}", x_choice);
+            self.board.place(x_choice, 1);
             if self.board.is_complete() { break; }
+
+            if print {
+                self.board.print("");
+                println!();
+            }
 
             self.board.place(self.obot.choose_next(&self.board), 2);
             if self.board.is_complete() { break; }
+
+            if print {
+                self.board.print("");
+                println!();
+            }
         }
 
+        if print {
+            self.board.print("");
+            println!();
+        }
 
         self.board.is_win()
     }
@@ -50,7 +67,7 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
         let step = (games as f64 * 0.1) as u32;
 
         for i in 0..games {
-            match self.sim_game() {
+            match self.sim_game(false) {
                 Some(1) => x_wins += 1,
                 Some(2) => o_wins += 1,
                 Some(_) => panic!(),
@@ -58,13 +75,13 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
             }
 
             if i % step == 0 && i != 0 {
-                println!("Reached {}%", i * 100 / games);
+                //println!("Reached {}%", i * 100 / games);
             }
         }
 
-        println!("X wins: {}", x_wins);
+        /*println!("X wins: {}", x_wins);
         println!("O wins: {}", o_wins);
-        println!("Draws: {}", draws);
+        println!("Draws: {}", draws);*/
 
         println!("X%: {}", (100 * x_wins) as f64 / games as f64);
         println!("O%: {}", (100 * o_wins) as f64 / games as f64);
@@ -73,7 +90,17 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 }
 
 fn main () {
-    let mut game = Game::<DFSBot, RandomBot>::new();
+    //let mut game = Game::<DFSBot, RandomBot>::new();
+    //game.sim_game(true);
+    //println!("\n//=====================================\n");
 
-    game.sim_games(100_000);
+    let dfsbot = DFSBot::new(1);
+    let board = Board{ board: [
+                                    1,0,0,
+                                    0,1,2,
+                                    0,0,2
+                                ]};
+
+    board.print("Input Board: ");
+    println!("Choice: {}", dfsbot.choose_next(&board));
 }

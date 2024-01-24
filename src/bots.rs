@@ -67,14 +67,44 @@ pub struct DFSBot {
     player: u8
 }
 impl DFSBot {
-    fn generate_moves(&self, board: &Board) -> Vec<(usize, Board)> {
+    fn generate_moves(&self, board: &Board, player: u8) -> Vec<(usize, Board)> {
         let spaces = board.list_open();
 
         spaces.iter().map(|&x| {
             let mut board = board.clone();
-            board.place(x, self.player);
+            board.place(x, player);
             (x, board)
         }).collect()
+    }
+
+    fn minmax(&self, board: Board, active_player: u8) -> i8 {
+        if board.is_complete() {
+            match board.is_win() {
+                Some(x) => if x == self.player {
+                    return 1;
+                } else {
+                    return -1;
+                },
+                None => return 0,
+            }
+        }
+
+        board.print("");
+
+        let moves = self.generate_moves(&board, active_player);
+
+        let mut worst = 1;
+        for m in moves {
+            let move_worst = self.minmax(m.1, otherplayer(active_player));
+            println!("Cell {}: Score {}", m.0+1, worst);
+            if move_worst < worst {
+                worst = move_worst;
+            }
+        }
+
+        println!();
+
+        worst
     }
 }
 impl Bot for DFSBot {
@@ -83,15 +113,26 @@ impl Bot for DFSBot {
     }
 
     fn choose_next(&self, board: &Board) -> usize {
-        let moves = self.generate_moves(&board);
 
-        for (space, board) in moves {
-            if board.is_complete() {
-                return space;
-            }
+        let moves = self.generate_moves(&board, self.player);
+        let mut processed_moves: Vec<(i8, usize)> = Vec::new();
+
+        for (cell, new_board) in moves {
+            let worst = self.minmax(new_board, otherplayer(self.player));
+
+            processed_moves.push((worst, cell));
         }
 
-        let open = board.list_open();
-        *open.choose(&mut rand::thread_rng()).unwrap()
+        processed_moves.sort_by(|a, b| i8::cmp(&a.0, &b.0));
+        println!("{:?}", processed_moves);
+        processed_moves.pop().unwrap().1
+    }
+}
+
+fn otherplayer(player: u8) -> u8 {
+    match player {
+        1 => 2,
+        2 => 1,
+        _ => panic!(),
     }
 }

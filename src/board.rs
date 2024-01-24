@@ -1,7 +1,7 @@
 
 #[derive(Clone)]
 pub struct Board {
-    board: [u8; 9],
+    pub board: [u8; 9],
 }
 
 impl Board {
