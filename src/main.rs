@@ -33,7 +33,7 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 
         loop {
             let x_choice = self.xbot.choose_next(&self.board);
-            println!("X Choice: {}", x_choice);
+            //println!("X Choice: {}", x_choice);
             self.board.place(x_choice, 1);
             if self.board.is_complete() { break; }
 
@@ -90,17 +90,17 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 }
 
 fn main () {
-    //let mut game = Game::<DFSBot, RandomBot>::new();
-    //game.sim_game(true);
-    //println!("\n//=====================================\n");
+    let mut game = Game::<DFSBot, RandomBot>::new();
+    game.sim_games(100);
 
-    let dfsbot = DFSBot::new(1);
+    /*let dfsbot = DFSBot::new(2);
     let board = Board{ board: [
-                                    1,0,0,
-                                    0,1,2,
-                                    0,0,2
+                                    2,1,2,
+                                    1,1,0,
+                                    0,0,0
                                 ]};
 
     board.print("Input Board: ");
-    println!("Choice: {}", dfsbot.choose_next(&board));
+    println!("Choice: {}", dfsbot.choose_next(&board) + 1);
+    println!("Minimax: {}", dfsbot.minmax(board, 2));*/
 }

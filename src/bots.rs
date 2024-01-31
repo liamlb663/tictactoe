@@ -1,3 +1,4 @@
+use core::panic;
 use std::io;
 
 use rand::seq::SliceRandom;
@@ -67,7 +68,7 @@ pub struct DFSBot {
     player: u8
 }
 impl DFSBot {
-    fn generate_moves(&self, board: &Board, player: u8) -> Vec<(usize, Board)> {
+    pub fn generate_moves(&self, board: &Board, player: u8) -> Vec<(usize, Board)> {
         let spaces = board.list_open();
 
         spaces.iter().map(|&x| {
@@ -77,34 +78,61 @@ impl DFSBot {
         }).collect()
     }
 
-    fn minmax(&self, board: Board, active_player: u8) -> i8 {
+    pub fn minmax(&self, board: Board, active_player: u8) -> i8 {
         if board.is_complete() {
-            match board.is_win() {
-                Some(x) => if x == self.player {
+            let status = board.is_win();
+            if let None = status {
+                return 0;
+            } else {
+                let status: u8 = status.unwrap();
+                if status == self.player {
                     return 1;
                 } else {
-                    return -1;
-                },
-                None => return 0,
+                    if status == 1 || status == 2 {
+                        return -1;
+                    } else {
+                        panic!();
+                    }
+                }
             }
         }
 
-        board.print("");
+        let next_player = match active_player {
+            1 => 2,
+            2 => 1,
+            _ => panic!(),
+        };
 
         let moves = self.generate_moves(&board, active_player);
 
-        let mut worst = 1;
-        for m in moves {
-            let move_worst = self.minmax(m.1, otherplayer(active_player));
-            println!("Cell {}: Score {}", m.0+1, worst);
-            if move_worst < worst {
-                worst = move_worst;
+        let mut min_result = 1;
+        let mut max_result = -1;
+
+        for (_poss_move, poss_board) in moves {
+            let poss_result = self.minmax(poss_board, next_player);
+
+            if min_result > poss_result {
+                min_result = poss_result;
+
+                if self.player != active_player && min_result == -1 {
+                    break;
+                }
+            }
+
+            if max_result < poss_result {
+                max_result = poss_result;
+
+                if self.player != active_player && min_result == -1 {
+                    break;
+                }
             }
         }
 
-        println!();
-
-        worst
+        if self.player == active_player {
+            max_result
+        } else {
+            min_result
+        }
     }
 }
 impl Bot for DFSBot {
@@ -114,25 +142,37 @@ impl Bot for DFSBot {
 
     fn choose_next(&self, board: &Board) -> usize {
 
+        let next_player = match self.player {
+            1 => 2,
+            2 => 1,
+            _ => panic!(),
+        };
+
         let moves = self.generate_moves(&board, self.player);
-        let mut processed_moves: Vec<(i8, usize)> = Vec::new();
 
-        for (cell, new_board) in moves {
-            let worst = self.minmax(new_board, otherplayer(self.player));
+        let mut processed_moves: Vec<(usize, i8)> = Vec::new();
+        for (poss_move, poss_board) in moves {
+            let poss_result = self.minmax(poss_board, next_player);
 
-            processed_moves.push((worst, cell));
+            processed_moves.push((poss_move, poss_result));
         }
 
-        processed_moves.sort_by(|a, b| i8::cmp(&a.0, &b.0));
-        println!("{:?}", processed_moves);
-        processed_moves.pop().unwrap().1
-    }
-}
+        for processed_move in &processed_moves {
+            if processed_move.1 == 1 {
+                return processed_move.0;
+            }
+        }
+        for processed_move in &processed_moves {
+            if processed_move.1 == 0 {
+                return processed_move.0;
+            }
+        }
+        for processed_move in &processed_moves {
+            if processed_move.1 == -1 {
+                return processed_move.0;
+            }
+        }
 
-fn otherplayer(player: u8) -> u8 {
-    match player {
-        1 => 2,
-        2 => 1,
-        _ => panic!(),
+        panic!();
     }
 }
