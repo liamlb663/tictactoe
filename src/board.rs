@@ -78,6 +78,9 @@ impl Board {
     }
 
     pub fn place(&mut self, cell: usize, player: u8) {
+        if self.board[cell] != 0 {
+            panic!();
+        }
         self.board[cell] = player;
     }
 }

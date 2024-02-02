@@ -79,9 +79,9 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
             }
         }
 
-        /*println!("X wins: {}", x_wins);
+        println!("X wins: {}", x_wins);
         println!("O wins: {}", o_wins);
-        println!("Draws: {}", draws);*/
+        println!("Draws: {}", draws);
 
         println!("X%: {}", (100 * x_wins) as f64 / games as f64);
         println!("O%: {}", (100 * o_wins) as f64 / games as f64);
