@@ -2,10 +2,13 @@
 mod board;
 mod bots;
 
-use board::Board;
+use std::time::Instant;
+
+use board::{Board, Player};
 
 use bots::DFSBot;
-#[allow(unused)]
+
+#[allow(unused)]    //Unused to allow for bot selection
 use bots::{Bot, RandomBot, Human};
 
 struct Game<Xbot, Obot>
@@ -23,18 +26,16 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
     fn new() -> Self {
         Self {
             board: Board::new(),
-            xbot: Xbot::new(1),
-            obot: Ybot::new(2),
+            xbot: Xbot::new(Player::X),
+            obot: Ybot::new(Player::O),
         }
     }
 
-    fn sim_game(&mut self, print: bool) -> Option<u8> {
+    fn sim_game(&mut self, print: bool) -> Option<Player> {
         self.board = Board::new();
 
         loop {
-            let x_choice = self.xbot.choose_next(&self.board);
-            //println!("X Choice: {}", x_choice);
-            self.board.place(x_choice, 1);
+            self.board.place(self.xbot.choose_next(&self.board), Player::X);
             if self.board.is_complete() { break; }
 
             if print {
@@ -42,7 +43,7 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
                 println!();
             }
 
-            self.board.place(self.obot.choose_next(&self.board), 2);
+            self.board.place(self.obot.choose_next(&self.board), Player::O);
             if self.board.is_complete() { break; }
 
             if print {
@@ -68,9 +69,8 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 
         for i in 0..games {
             match self.sim_game(false) {
-                Some(1) => x_wins += 1,
-                Some(2) => o_wins += 1,
-                Some(_) => panic!(),
+                Some(Player::X) => x_wins += 1,
+                Some(Player::O) => o_wins += 1,
                 None => draws += 1,
             }
 
@@ -90,17 +90,10 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 }
 
 fn main () {
+    let time_now = Instant::now();
+
     let mut game = Game::<DFSBot, RandomBot>::new();
-    game.sim_games(100);
+    game.sim_games(1000);
 
-    /*let dfsbot = DFSBot::new(2);
-    let board = Board{ board: [
-                                    2,1,2,
-                                    1,1,0,
-                                    0,0,0
-                                ]};
-
-    board.print("Input Board: ");
-    println!("Choice: {}", dfsbot.choose_next(&board) + 1);
-    println!("Minimax: {}", dfsbot.minmax(board, 2));*/
+    println!("{:?}", time_now.elapsed());
 }

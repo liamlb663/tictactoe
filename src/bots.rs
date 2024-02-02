@@ -3,16 +3,16 @@ use std::io;
 
 use rand::seq::SliceRandom;
 
-use crate::board::Board;
+use crate::board::{Board, Player};
 
 pub trait Bot {
-    fn new(player: u8) -> Self;
+    fn new(player: Player) -> Self;
     fn choose_next(&self, board: &Board) -> usize;
 }
 
 pub struct RandomBot;
 impl Bot for RandomBot {
-    fn new(_player: u8) -> Self {
+    fn new(_player: Player) -> Self {
         Self {}
     }
 
@@ -26,12 +26,11 @@ pub struct Human {
     mark: char,
 }
 impl Bot for Human{ //Hehe
-    fn new(player: u8) -> Self {
+    fn new(player: Player) -> Self {
         Self {
             mark: match player {
-                1 => 'x',
-                2 => 'o',
-                _ => panic!(),
+                Player::X => 'x',
+                Player::O => 'o',
             },
         }
     }
@@ -65,10 +64,10 @@ impl Bot for Human{ //Hehe
 }
 
 pub struct DFSBot {
-    player: u8
+    player: Player
 }
 impl DFSBot {
-    pub fn generate_moves(&self, board: &Board, player: u8) -> Vec<(usize, Board)> {
+    pub fn generate_moves(&self, board: &Board, player: Player) -> Vec<(usize, Board)> {
         let spaces = board.list_open();
 
         spaces.iter().map(|&x| {
@@ -78,31 +77,22 @@ impl DFSBot {
         }).collect()
     }
 
-    pub fn minmax(&self, board: Board, active_player: u8) -> i8 {
+    pub fn minmax(&self, board: Board, active_player: Player) -> i8 {
         if board.is_complete() {
             let status = board.is_win();
             if let None = status {
                 return 0;
             } else {
-                let status: u8 = status.unwrap();
+                let status: Player = status.unwrap();
                 if status == self.player {
                     return 1;
                 } else {
-                    if status == 1 || status == 2 {
-                        return -1;
-                    } else {
-                        panic!();
-                    }
+                    return -1;
                 }
             }
         }
 
-        let next_player = match active_player {
-            1 => 2,
-            2 => 1,
-            _ => panic!(),
-        };
-
+        let next_player = self.player.other();
         let moves = self.generate_moves(&board, active_player);
 
         let mut min_result = 1;
@@ -114,17 +104,19 @@ impl DFSBot {
             if min_result > poss_result {
                 min_result = poss_result;
 
-                if self.player != active_player && min_result == -1 {
+                // AB pruning
+                /*if self.player != active_player && min_result == -1 {
                     break;
-                }
+                }*/
             }
 
             if max_result < poss_result {
                 max_result = poss_result;
 
-                if self.player != active_player && min_result == -1 {
+                // AB pruning
+                /*if self.player != active_player && min_result == -1 {
                     break;
-                }
+                }*/
             }
         }
 
@@ -136,17 +128,13 @@ impl DFSBot {
     }
 }
 impl Bot for DFSBot {
-    fn new(player: u8) -> Self {
+    fn new(player: Player) -> Self {
         Self { player }
     }
 
     fn choose_next(&self, board: &Board) -> usize {
 
-        let next_player = match self.player {
-            1 => 2,
-            2 => 1,
-            _ => panic!(),
-        };
+        let next_player = self.player.other();
 
         let moves = self.generate_moves(&board, self.player);
 
