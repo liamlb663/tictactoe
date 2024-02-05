@@ -90,8 +90,8 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
 }
 
 fn main () {
-    let mut game = Game::<DFSBot, RandomBot>::new();
-    game.sim_games(100);
+    let mut game = Game::<Human, DFSBot>::new();
+    game.sim_game(false);
 
     /*let dfsbot = DFSBot::new(2);
     let board = Board{ board: [
