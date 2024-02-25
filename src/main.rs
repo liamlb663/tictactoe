@@ -2,29 +2,27 @@
 mod board;
 mod bots;
 
+use std::time::Instant;
+
 use board::Board;
 
 use bots::DFSBot;
-#[allow(unused)]
 use bots::{Bot, RandomBot, Human};
+use clap::{Parser, ArgEnum};
 
-struct Game<Xbot, Obot>
-where
-    Xbot: Bot,
-    Obot: Bot,
-{
-    xbot: Xbot,
-    obot: Obot,
+struct Game {
+    xbot: Box<dyn Bot>,
+    obot: Box<dyn Bot>,
     board: Board,
 }
 
 #[allow(dead_code)]
-impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
-    fn new() -> Self {
+impl Game {
+    fn new(bot1: Box<dyn Bot>, bot2: Box<dyn Bot>) -> Self {
         Self {
             board: Board::new(),
-            xbot: Xbot::new(1),
-            obot: Ybot::new(2),
+            xbot: bot1,
+            obot: bot2,
         }
     }
 
@@ -89,18 +87,61 @@ impl<Xbot: Bot, Ybot: Bot> Game<Xbot, Ybot> {
     }
 }
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Sets the number of games to simulate
+    #[clap(short, long, value_parser, default_value_t = 1)]
+    games: u32,
+
+    /// Sets the bot for player 1
+    #[clap(short = '1', long = "player1", arg_enum, default_value = "random")]
+    p1: BotType,
+
+    /// Sets the bot for player 2
+    #[clap(short = '2', long = "player2", arg_enum, default_value = "dfs")]
+    p2: BotType,
+
+    #[clap(short = 't', long = "time")]
+    timed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, ArgEnum)]
+enum BotType {
+    Random,
+    DFS,
+    Human,
+}
+
+impl BotType {
+    fn create_bot(&self, player: u8) -> Box<dyn Bot> {
+        match self {
+            BotType::Random => Box::new(RandomBot::new(player)),
+            BotType::DFS => Box::new(DFSBot::new(player)),
+            BotType::Human => Box::new(Human::new(player)),
+        }
+    }
+}
+
 fn main () {
-    let mut game = Game::<Human, DFSBot>::new();
-    game.sim_game(false);
+    let args = Args::parse();
 
-    /*let dfsbot = DFSBot::new(2);
-    let board = Board{ board: [
-                                    2,1,2,
-                                    1,1,0,
-                                    0,0,0
-                                ]};
+    let mut game = Game::new(args.p1.create_bot(1), args.p2.create_bot(2));
 
-    board.print("Input Board: ");
-    println!("Choice: {}", dfsbot.choose_next(&board) + 1);
-    println!("Minimax: {}", dfsbot.minmax(board, 2));*/
+    // Start timing
+    let start = Instant::now();
+
+    if args.games == 1 {
+        game.sim_game(true);
+    } else {
+        game.sim_games(args.games);
+    }
+
+    // End timing
+    let duration = start.elapsed();
+
+    // Print out the duration of the game(s)
+    if args.timed {
+        println!("\nTime taken: {:?}", duration);
+    }
 }

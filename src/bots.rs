@@ -6,7 +6,8 @@ use rand::seq::SliceRandom;
 use crate::board::Board;
 
 pub trait Bot {
-    fn new(player: u8) -> Self;
+    fn new(player: u8) -> Self where Self: Sized;
+    //fn new(player: u8) -> Self;
     fn choose_next(&self, board: &Board) -> usize;
 }
 
